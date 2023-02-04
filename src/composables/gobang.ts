@@ -1,5 +1,6 @@
 import type { Ref } from 'vue'
 import type { PieceState } from '~/types'
+import { isDark, toggleDark } from '~/composables'
 
 export const EMPTY_CHESS = 'none'
 export const BLACK_CHESS = 'block'
@@ -10,6 +11,7 @@ export type GameStatus = 'ready' | 'play' | 'won' | 'lost'
 export type ChessColor = 'block' | 'white'
 
 interface GameState {
+  isManMachine: boolean
   status: GameStatus
   playerColor: ChessColor
   computerColor: ChessColor
@@ -36,6 +38,10 @@ export class GamePlay {
     return this.state.value.board
   }
 
+  get isManMachine() {
+    return this.state.value.isManMachine
+  }
+
   get playerColor() {
     return this.state.value.playerColor
   }
@@ -52,8 +58,9 @@ export class GamePlay {
     return this.state.value.computerLastPosition
   }
 
-  reset(playerFirst = true) {
+  reset(playerFirst = true, isManMachine = true) {
     this.state.value = {
+      isManMachine,
       status: 'ready',
       playerColor: playerFirst ? BLACK_CHESS : WHITE_CHESS,
       computerColor: playerFirst ? WHITE_CHESS : BLACK_CHESS,
@@ -69,7 +76,8 @@ export class GamePlay {
       ),
     }
 
-    !playerFirst && this.compterTurn()
+    if (isManMachine)
+      !playerFirst && this.compterTurn()
 
     this.gameStart()
   }
@@ -79,12 +87,15 @@ export class GamePlay {
   }
 
   gameOver(status: GameStatus) {
-    this.markWonPieces(status === 'won')
+    const isPlayerWon = status === 'won'
+    const x = isPlayerWon ? this.playerLastPosition![0] : this.computerLastPosition![0]
+    const y = isPlayerWon ? this.playerLastPosition![1] : this.computerLastPosition![1]
+    const chessColor = isPlayerWon ? this.playerColor : this.computerColor
+    this.markWonPieces(x, y, chessColor)
     this.state.value.status = status
     if (status === 'lost') {
       setTimeout(() => {
         alert('lost')
-        this.reset()
       })
     }
   }
@@ -117,28 +128,41 @@ export class GamePlay {
     if (status !== EMPTY_CHESS)
       return
 
-    const playerColor = this.playerColor
+    if (this.isManMachine) {
+      const playerColor = this.playerColor
+      this.dropPiece(x, y, playerColor)
+      this.state.value.playerLastPosition = [x, y]
 
-    this.dropPiece(x, y, playerColor)
-    this.state.value.playerLastPosition = [x, y]
+      if (
+        this.countAndSideX(x, y, playerColor).count >= 5
+        || this.countAndSideY(x, y, playerColor).count >= 5
+        || this.countAndSideYX(x, y, playerColor).count >= 5
+        || this.countAndSideYX(x, y, playerColor).count >= 5
+      )
+        return this.gameOver('won')
 
-    // “——”方向
-    if (this.countAndSideX(x, y, playerColor).count >= 5)
-      return this.gameOver('won')
+      this.compterTurn()
+    }
+    else {
+      const chessColor = isDark.value ? BLACK_CHESS : WHITE_CHESS
+      this.dropPiece(x, y, chessColor)
 
-    // “｜”方向
-    if (this.countAndSideY(x, y, playerColor).count >= 5)
-      return this.gameOver('won')
+      this.clearAllMark()
+      this.markPiece(x, y)
+      toggleDark()
 
-    // “\”方向
-    if (this.countAndSideYX(x, y, playerColor).count >= 5)
-      return this.gameOver('won')
-
-    // “/”方向
-    if (this.countAndSideYX(x, y, playerColor).count >= 5)
-      return this.gameOver('won')
-
-    this.compterTurn()
+      if (
+        this.countAndSideX(x, y, chessColor).count >= 5
+        || this.countAndSideY(x, y, chessColor).count >= 5
+        || this.countAndSideYX(x, y, chessColor).count >= 5
+        || this.countAndSideYX(x, y, chessColor).count >= 5
+      ) {
+        this.markWonPieces(x, y, chessColor)
+        setTimeout(() => {
+          alert(`${chessColor} won`)
+        })
+      }
+    }
   }
 
   /**
@@ -164,43 +188,18 @@ export class GamePlay {
   }
 
   // 标记显示获胜棋子
-  markWonPieces(isPlayerWon: boolean) {
-    let pointInfo: PointInfo
-    const x = isPlayerWon ? this.playerLastPosition![0] : this.computerLastPosition![0]
-    const y = isPlayerWon ? this.playerLastPosition![1] : this.computerLastPosition![1]
-    const chessColor = isPlayerWon ? this.playerColor : this.computerColor
+  markWonPieces(x: number, y: number, chessColor: ChessColor) {
+    const pointInfoList: PointInfo[] = [
+      this.countAndSideX(x, y, chessColor),
+      this.countAndSideY(x, y, chessColor),
+      this.countAndSideYX(x, y, chessColor),
+      this.countAndSideXY(x, y, chessColor),
+    ]
 
-    // “——”方向
-    pointInfo = this.countAndSideX(x, y, chessColor)
-    if (pointInfo.count >= 5) {
-      pointInfo.lineChess.forEach(([x, y]) => {
-        this.markPiece(x, y)
-      })
-    }
-
-    // “｜”方向
-    pointInfo = this.countAndSideY(x, y, chessColor)
-    if (pointInfo.count >= 5) {
-      pointInfo.lineChess.forEach(([x, y]) => {
-        this.markPiece(x, y)
-      })
-    }
-
-    // “\”方向
-    pointInfo = this.countAndSideYX(x, y, chessColor)
-    if (pointInfo.count >= 5) {
-      pointInfo.lineChess.forEach(([x, y]) => {
-        this.markPiece(x, y)
-      })
-    }
-
-    // “/”方向
-    pointInfo = this.countAndSideXY(x, y, chessColor)
-    if (pointInfo.count >= 5) {
-      pointInfo.lineChess.forEach(([x, y]) => {
-        this.markPiece(x, y)
-      })
-    }
+    pointInfoList.forEach((pointInfo) => {
+      if (pointInfo.count >= 5)
+        pointInfo.lineChess.forEach(([x, y]) => this.markPiece(x, y))
+    })
   }
 
   /**

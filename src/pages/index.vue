@@ -19,6 +19,12 @@ const play = new GamePlay()
       </button>
     </div>
 
+    <div flex="~ gap1" py5 items-center justify-center>
+      <button btn @click="play.reset(undefined, false)">
+        New Game
+      </button>
+    </div>
+
     <div border py5 class="chessboard">
       <div
         v-for="row, y in play.board"
