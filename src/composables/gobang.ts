@@ -201,20 +201,24 @@ export class GamePlay {
     let maxWeight = 0
     let x
     let y
-    let tem
+    let temp
     for (x = 14; x >= 0; x--) {
       for (y = 14; y >= 0; y--) {
         if (this.board[y][x].status !== EMPTY_CHESS)
           continue
 
-        tem = this.calcWeight(x, y)
-        if (tem > maxWeight) {
-          maxWeight = tem
+        temp = this.calcWeight(x, y)
+        if (temp > maxWeight) {
+          maxWeight = temp
           maxX = x
           maxY = y
         }
       }
     }
+    // const nonEmpty = this.board.flat().filter(item => item.status !== EMPTY_CHESS)
+    // const maxWeight = Math.max(...nonEmpty.map(({ x, y }) => this.calcWeight(x, y)))
+    // const { x: maxX, y: maxY } = nonEmpty.find(({ x, y }) => this.calcWeight(x, y) === maxWeight) ?? {}
+    // const { x: maxX, y: maxY } = nonEmpty.find(({ x, y }) => this.calcWeight(x, y) === maxWeight) as PieceState
     this.dropPiece(maxX, maxY, this.state.value.computerColor)
     this.clearAllMark()
     this.markPiece(maxX, maxY)
@@ -493,122 +497,79 @@ export class GamePlay {
     return { count, side1, side2 }
   }
 
-  // 计算下子权重
+  /**
+   * 计算下子权重
+   */
   calcWeight(x: number, y: number) {
     let weight = 14 - (Math.abs(x - 7) + Math.abs(y - 7)) // 基于棋盘位置权重
-    let pointInfo = {} as PointInfo // 存储连子个数及两端是否为空的信息
+    let pointInfo = {} as PointInfo
     const playerColor = this.state.value.playerColor
     const computerColor = this.state.value.computerColor
 
     pointInfo = this.countAndSideX(x, y, computerColor)
-    // 计算机下子权重
-    weight += this.judgeWeight(
-      pointInfo.count,
-      pointInfo.side1,
-      pointInfo.side2,
-      true,
-    )
+    weight += this.judgeWeight(pointInfo, true)
     pointInfo = this.countAndSideX(x, y, playerColor)
-    // 玩家下子权重
-    weight += this.judgeWeight(
-      pointInfo.count,
-      pointInfo.side1,
-      pointInfo.side2,
-      false,
-    )
+    weight += this.judgeWeight(pointInfo, false)
 
     pointInfo = this.countAndSideY(x, y, computerColor)
-    // 计算机下子权重
-    weight += this.judgeWeight(
-      pointInfo.count,
-      pointInfo.side1,
-      pointInfo.side2,
-      true,
-    )
+    weight += this.judgeWeight(pointInfo, true)
     pointInfo = this.countAndSideY(x, y, playerColor)
-    // 玩家下子权重
-    weight += this.judgeWeight(
-      pointInfo.count,
-      pointInfo.side1,
-      pointInfo.side2,
-      false,
-    )
+    weight += this.judgeWeight(pointInfo, false)
 
     pointInfo = this.countAndSideXY(x, y, computerColor)
-    // 计算机下子权重
-    weight += this.judgeWeight(
-      pointInfo.count,
-      pointInfo.side1,
-      pointInfo.side2,
-      true,
-    )
+    weight += this.judgeWeight(pointInfo, true)
     pointInfo = this.countAndSideXY(x, y, playerColor)
-    // 玩家下子权重
-    weight += this.judgeWeight(
-      pointInfo.count,
-      pointInfo.side1,
-      pointInfo.side2,
-      false,
-    )
+    weight += this.judgeWeight(pointInfo, false)
 
     pointInfo = this.countAndSideYX(x, y, computerColor)
-    // 计算机下子权重
-    weight += this.judgeWeight(
-      pointInfo.count,
-      pointInfo.side1,
-      pointInfo.side2,
-      true,
-    )
+    weight += this.judgeWeight(pointInfo, true)
     pointInfo = this.countAndSideYX(x, y, playerColor)
-    // 玩家下子权重
-    weight += this.judgeWeight(
-      pointInfo.count,
-      pointInfo.side1,
-      pointInfo.side2,
-      false,
-    )
+    weight += this.judgeWeight(pointInfo, false)
 
     return weight
   }
 
-  // 判断权重
-  judgeWeight(count: number, side1: boolean, side2: boolean, isCom: boolean) {
+  /**
+   * 判断权重
+   */
+  judgeWeight(pointInfo: PointInfo, isComputer: boolean) {
+    const { count, side1, side2 } = pointInfo
     let weight = 0
     switch (count) {
       case 1:
         if (side1 && side2)
-          weight = isCom ? 15 : 10 // 一个子两边为空
+          weight = isComputer ? 15 : 10 // 一个子两边为空
 
         break
       case 2:
         if (side1 && side2)
-          weight = isCom ? 100 : 50 // 两个连子两边为空
+          weight = isComputer ? 100 : 50 // 两个连子两边为空
 
         else if (side1 || side2)
-          weight = isCom ? 10 : 5 // 两个连子一边为空
+          weight = isComputer ? 10 : 5 // 两个连子一边为空
 
         break
       case 3:
         if (side1 && side2)
-          weight = isCom ? 500 : 200 // 三个连子两边为空
+          weight = isComputer ? 500 : 200 // 三个连子两边为空
 
         else if (side1 || side2)
-          weight = isCom ? 30 : 20 // 三个连子一边为空
+          weight = isComputer ? 30 : 20 // 三个连子一边为空
 
         break
       case 4:
         if (side1 && side2)
-          weight = isCom ? 5000 : 2000 // 四个连子两边为空
+          weight = isComputer ? 5000 : 2000 // 四个连子两边为空
 
         else if (side1 || side2)
-          weight = isCom ? 400 : 100 // 四个连子一边为空
+          weight = isComputer ? 400 : 100 // 四个连子一边为空
 
         break
       case 5:
-        weight = isCom ? 100000 : 10000
+        weight = isComputer ? 100000 : 10000
         break
       default:
-        weight = isCom ? 500000 : 250000
+        weight = isComputer ? 500000 : 250000
         break
     }
     return weight
