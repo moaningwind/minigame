@@ -12,7 +12,7 @@ const play = new GamePlay()
   <div>
     <div flex="~ gap1" py5 items-center justify-center>
       <button btn @click="play.reset()">
-        New Game
+        Player First
       </button>
       <button btn @click="play.reset(false)">
         Computer First
@@ -30,7 +30,7 @@ const play = new GamePlay()
           v-for="block, x in row"
           :key="x"
           :block="block"
-          @click="play.onClick(block)"
+          @click="play.playerTurn(block)"
         />
       </div>
     </div>
