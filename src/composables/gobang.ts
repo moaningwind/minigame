@@ -73,7 +73,7 @@ export class GamePlay {
   }
 
   dropPiece(x: number, y: number, color: ChessColor) {
-    this.board[x][y].status = color
+    this.board[y][x].status = color
   }
 
   clearAllMark() {
@@ -83,11 +83,13 @@ export class GamePlay {
   }
 
   markPiece(x: number, y: number) {
-    this.board[x][y].isMark = true
+    this.board[y][x].isMark = true
   }
 
   onClick(block: PieceState) {
-    const { x, y } = block
+    const { x, y, status } = block
+    if (status !== EMPTY_CHESS)
+      return
     this.dropPiece(x, y, this.state.value.playerColor)
     this.state.value.playerLastPosition = [x, y]
     this.isPlayerWon(x, y) && this.playerWin()
@@ -98,37 +100,17 @@ export class GamePlay {
     const playerColor = this.state.value.playerColor
     let m
     let n
-    // x方向
-    for (m = y - 1; m >= 0; m--) {
-      if (this.board[x][m].status === playerColor)
-        count++
 
-      else
-        break
-    }
-    for (m = y + 1; m < 15; m++) {
-      if (this.board[x][m].status === playerColor)
-        count++
-
-      else
-        break
-    }
-    if (count >= 5)
-      return true
-
-    else
-      count = 1
-
-    // y方向
+    // “——”方向
     for (m = x - 1; m >= 0; m--) {
-      if (this.board[m][y].status === playerColor)
+      if (this.board[y][m].status === playerColor)
         count++
 
       else
         break
     }
     for (m = x + 1; m < 15; m++) {
-      if (this.board[m][y].status === playerColor)
+      if (this.board[y][m].status === playerColor)
         count++
 
       else
@@ -140,16 +122,37 @@ export class GamePlay {
     else
       count = 1
 
-    // 左斜方向
+    // “｜”方向
+    for (n = y - 1; n >= 0; n--) {
+      if (this.board[n][x].status === playerColor)
+        count++
+
+      else
+        break
+    }
+    for (n = y + 1; n < 15; n++) {
+      if (this.board[n][x].status === playerColor)
+        count++
+
+      else
+        break
+    }
+    if (count >= 5)
+      return true
+
+    else
+      count = 1
+
+    // “\”方向
     for (m = x - 1, n = y - 1; m >= 0 && n >= 0; m--, n--) {
-      if (this.board[m][n].status === playerColor)
+      if (this.board[n][m].status === playerColor)
         count++
 
       else
         break
     }
     for (m = x + 1, n = y + 1; m < 15 && n < 15; m++, n++) {
-      if (this.board[m][n].status === playerColor)
+      if (this.board[n][m].status === playerColor)
         count++
 
       else
@@ -161,16 +164,16 @@ export class GamePlay {
     else
       count = 1
 
-    // 右斜方向
+    // “/”方向
     for (m = x - 1, n = y + 1; m >= 0 && n < 15; m--, n++) {
-      if (this.board[m][n].status === playerColor)
+      if (this.board[n][m].status === playerColor)
         count++
 
       else
         break
     }
     for (m = x + 1, n = y - 1; m < 15 && n >= 0; m++, n--) {
-      if (this.board[m][n].status === playerColor)
+      if (this.board[n][m].status === playerColor)
         count++
 
       else
@@ -178,6 +181,9 @@ export class GamePlay {
     }
     if (count >= 5)
       return true
+
+    else
+      count = 1
 
     this.compterTurn()
     return false
@@ -198,7 +204,7 @@ export class GamePlay {
     let tem
     for (x = 14; x >= 0; x--) {
       for (y = 14; y >= 0; y--) {
-        if (this.board[x][y].status !== EMPTY_CHESS)
+        if (this.board[y][x].status !== EMPTY_CHESS)
           continue
 
         tem = this.calcWeight(x, y)
@@ -240,37 +246,10 @@ export class GamePlay {
       y = this.state.value.computerLastPosition![1]
     }
 
-    // x方向
-    lineChess[0] = [x, y] // 定义第一个数组元素
-    for (m = y - 1; m >= 0; m--) {
-      if (this.board[x][m].status === chessColor) {
-        lineChess[count] = [x, m]
-        count++
-      }
-      else {
-        break
-      }
-    }
-    for (m = y + 1; m < 15; m++) {
-      if (this.board[x][m].status === chessColor) {
-        lineChess[count] = [x, m]
-        count++
-      }
-      else {
-        break
-      }
-    }
-    if (count >= 5) {
-      lineChess.forEach(([x, y]) => {
-        this.markPiece(x, y)
-      })
-      return
-    }
-    // y方向
-    count = 1
+    // “——”方向
     lineChess[0] = [x, y]
     for (m = x - 1; m >= 0; m--) {
-      if (this.board[m][y].status === chessColor) {
+      if (this.board[y][m].status === chessColor) {
         lineChess[count] = [m, y]
         count++
       }
@@ -279,7 +258,7 @@ export class GamePlay {
       }
     }
     for (m = x + 1; m < 15; m++) {
-      if (this.board[m][y].status === chessColor) {
+      if (this.board[y][m].status === chessColor) {
         lineChess[count] = [m, y]
         count++
       }
@@ -293,21 +272,22 @@ export class GamePlay {
       })
       return
     }
-    // 左斜方向
-    count = 1
-    lineChess[0] = [x, y]
-    for (m = x - 1, n = y - 1; m >= 0 && n >= 0; m--, n--) {
-      if (this.board[m][n].status === chessColor) {
-        lineChess[count] = [m, n]
+    else { count = 1 }
+
+    // “｜”方向
+    lineChess[0] = [x, y] // 定义第一个数组元素
+    for (n = y - 1; n >= 0; n--) {
+      if (this.board[n][x].status === chessColor) {
+        lineChess[count] = [x, n]
         count++
       }
       else {
         break
       }
     }
-    for (m = x + 1, n = y + 1; m < 15 && n < 15; m++, n++) {
-      if (this.board[m][n].status === chessColor) {
-        lineChess[count] = [m, n]
+    for (n = y + 1; n < 15; n++) {
+      if (this.board[n][x].status === chessColor) {
+        lineChess[count] = [x, n]
         count++
       }
       else {
@@ -320,11 +300,12 @@ export class GamePlay {
       })
       return
     }
-    // 右斜方向
-    count = 1
+    else { count = 1 }
+
+    // “\”方向
     lineChess[0] = [x, y]
-    for (m = x - 1, n = y + 1; m >= 0 && n < 15; m--, n++) {
-      if (this.board[m][n].status === chessColor) {
+    for (m = x - 1, n = y - 1; m >= 0 && n >= 0; m--, n--) {
+      if (this.board[n][m].status === chessColor) {
         lineChess[count] = [m, n]
         count++
       }
@@ -332,8 +313,8 @@ export class GamePlay {
         break
       }
     }
-    for (m = x + 1, n = y - 1; m < 15 && n >= 0; m++, n--) {
-      if (this.board[m][n].status === chessColor) {
+    for (m = x + 1, n = y + 1; m < 15 && n < 15; m++, n++) {
+      if (this.board[n][m].status === chessColor) {
         lineChess[count] = [m, n]
         count++
       }
@@ -346,64 +327,62 @@ export class GamePlay {
         this.markPiece(x, y)
       })
     }
+    else { count = 1 }
+
+    // “/”方向
+    lineChess[0] = [x, y]
+    for (m = x - 1, n = y + 1; m >= 0 && n < 15; m--, n++) {
+      if (this.board[n][m].status === chessColor) {
+        lineChess[count] = [m, n]
+        count++
+      }
+      else {
+        break
+      }
+    }
+    for (m = x + 1, n = y - 1; m < 15 && n >= 0; m++, n--) {
+      if (this.board[n][m].status === chessColor) {
+        lineChess[count] = [m, n]
+        count++
+      }
+      else {
+        break
+      }
+    }
+    if (count >= 5) {
+      lineChess.forEach(([x, y]) => {
+        this.markPiece(x, y)
+      })
+    }
+    else { count = 1 }
   }
 
-  // 统计X方向连子个数并判断两端是否为空
+  /**
+   * 统计X方向连子个数并判断两端是否为空
+   */
   countAndSideX(x: number, y: number, chessColor: ChessColor): PointInfo {
     let m
     // let n
     let count = 1
     let side1 = false
     let side2 = false
-    for (m = y - 1; m >= 0; m--) {
-      if (this.board[x][m].status === chessColor) {
-        count++
-      }
-      else {
-        if (this.board[x][m].status === EMPTY_CHESS)
-          side1 = true
-
-        break
-      }
-    }
-    for (m = y + 1; m < 15; m++) {
-      if (this.board[x][m].status === chessColor) {
-        count++
-      }
-      else {
-        if (this.board[x][m].status === EMPTY_CHESS)
-          side2 = true
-
-        break
-      }
-    }
-    return { count, side1, side2 }
-  }
-
-  // 统计Y方向连子个数并判断两端是否为空
-  countAndSideY(x: number, y: number, chessColor: ChessColor): PointInfo {
-    let m
-    // let n
-    let count = 1
-    let side1 = false
-    let side2 = false
     for (m = x - 1; m >= 0; m--) {
-      if (this.board[m][y].status === chessColor) {
+      if (this.board[y][m].status === chessColor) {
         count++
       }
       else {
-        if (this.board[m][y].status === EMPTY_CHESS)
+        if (this.board[y][m].status === EMPTY_CHESS)
           side1 = true
 
         break
       }
     }
     for (m = x + 1; m < 15; m++) {
-      if (this.board[m][y].status === chessColor) {
+      if (this.board[y][m].status === chessColor) {
         count++
       }
       else {
-        if (this.board[m][y].status === EMPTY_CHESS)
+        if (this.board[y][m].status === EMPTY_CHESS)
           side2 = true
 
         break
@@ -412,30 +391,66 @@ export class GamePlay {
     return { count, side1, side2 }
   }
 
-  // 统计左斜方向连子个数并判断两端是否为空
+  /**
+   * 统计Y方向连子个数并判断两端是否为空
+   */
+  countAndSideY(x: number, y: number, chessColor: ChessColor): PointInfo {
+    // let m
+    let n
+    let count = 1
+    let side1 = false
+    let side2 = false
+    for (n = y - 1; n >= 0; n--) {
+      if (this.board[n][x].status === chessColor) {
+        count++
+      }
+      else {
+        if (this.board[n][x].status === EMPTY_CHESS)
+          side1 = true
+
+        break
+      }
+    }
+    for (n = y + 1; n < 15; n++) {
+      if (this.board[n][x].status === chessColor) {
+        count++
+      }
+      else {
+        if (this.board[n][x].status === EMPTY_CHESS)
+          side2 = true
+
+        break
+      }
+    }
+    return { count, side1, side2 }
+  }
+
+  /**
+   * 统计“/”方向连子个数并判断两端是否为空
+   */
   countAndSideXY(x: number, y: number, chessColor: ChessColor): PointInfo {
     let m
     let n
     let count = 1
     let side1 = false
     let side2 = false
-    for (m = x - 1, n = y - 1; m >= 0 && n >= 0; m--, n--) {
-      if (this.board[m][n].status === chessColor) {
+    for (m = x - 1, n = y + 1; m >= 0 && n < 15; m--, n++) {
+      if (this.board[n][m].status === chessColor) {
         count++
       }
       else {
-        if (this.board[m][n].status === EMPTY_CHESS)
+        if (this.board[n][m].status === EMPTY_CHESS)
           side1 = true
 
         break
       }
     }
-    for (m = x + 1, n = y + 1; m < 15 && n < 15; m++, n++) {
-      if (this.board[m][n].status === chessColor) {
+    for (m = x + 1, n = y - 1; m < 15 && n >= 0; m++, n--) {
+      if (this.board[n][m].status === chessColor) {
         count++
       }
       else {
-        if (this.board[m][n].status === EMPTY_CHESS)
+        if (this.board[n][m].status === EMPTY_CHESS)
           side2 = true
 
         break
@@ -444,30 +459,32 @@ export class GamePlay {
     return { count, side1, side2 }
   }
 
-  // 统计右斜方向连子个数并判断两端是否为空
+  /**
+   * 统计“\”方向连子个数并判断两端是否为空
+   */
   countAndSideYX(x: number, y: number, chessColor: ChessColor): PointInfo {
     let m
     let n
     let count = 1
     let side1 = false
     let side2 = false
-    for (m = x - 1, n = y + 1; m >= 0 && n < 15; m--, n++) {
-      if (this.board[m][n].status === chessColor) {
+    for (m = x - 1, n = y - 1; m >= 0 && n >= 0; m--, n--) {
+      if (this.board[n][m].status === chessColor) {
         count++
       }
       else {
-        if (this.board[m][n].status === EMPTY_CHESS)
+        if (this.board[n][m].status === EMPTY_CHESS)
           side1 = true
 
         break
       }
     }
-    for (m = x + 1, n = y - 1; m < 15 && n >= 0; m++, n--) {
-      if (this.board[m][n].status === chessColor) {
+    for (m = x + 1, n = y + 1; m < 15 && n < 15; m++, n++) {
+      if (this.board[n][m].status === chessColor) {
         count++
       }
       else {
-        if (this.board[m][n].status === EMPTY_CHESS)
+        if (this.board[n][m].status === EMPTY_CHESS)
           side2 = true
 
         break
@@ -482,7 +499,7 @@ export class GamePlay {
     let pointInfo = {} as PointInfo // 存储连子个数及两端是否为空的信息
     const playerColor = this.state.value.playerColor
     const computerColor = this.state.value.computerColor
-    // x方向
+
     pointInfo = this.countAndSideX(x, y, computerColor)
     // 计算机下子权重
     weight += this.judgeWeight(
@@ -499,7 +516,7 @@ export class GamePlay {
       pointInfo.side2,
       false,
     )
-    // y方向
+
     pointInfo = this.countAndSideY(x, y, computerColor)
     // 计算机下子权重
     weight += this.judgeWeight(
@@ -516,7 +533,7 @@ export class GamePlay {
       pointInfo.side2,
       false,
     )
-    // 左斜方向
+
     pointInfo = this.countAndSideXY(x, y, computerColor)
     // 计算机下子权重
     weight += this.judgeWeight(
@@ -533,7 +550,7 @@ export class GamePlay {
       pointInfo.side2,
       false,
     )
-    // 右斜方向
+
     pointInfo = this.countAndSideYX(x, y, computerColor)
     // 计算机下子权重
     weight += this.judgeWeight(
@@ -550,6 +567,7 @@ export class GamePlay {
       pointInfo.side2,
       false,
     )
+
     return weight
   }
 

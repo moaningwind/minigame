@@ -58,7 +58,9 @@ watch(() => isEmpty, () => {
     :class="getPieceClass(block)"
     @mouseenter="handleEnter(block)"
     @mouseleave="handleLeave(block)"
-  />
+  >
+    <!-- {{ block.x }},{{ block.y }} -->
+  </div>
 </template>
 
 <style scoped>
