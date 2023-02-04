@@ -5,9 +5,9 @@ export const EMPTY_CHESS = 'none'
 export const BLACK_CHESS = 'block'
 export const WHITE_CHESS = 'white'
 
-type GameStatus = 'ready' | 'play' | 'won' | 'lost'
+export type GameStatus = 'ready' | 'play' | 'won' | 'lost'
 
-type ChessColor = 'block' | 'white'
+export type ChessColor = 'block' | 'white'
 
 interface GameState {
   status: GameStatus
