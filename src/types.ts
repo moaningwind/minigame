@@ -13,6 +13,5 @@ export interface PieceState {
   x: number
   y: number
   status: ChessStatus
-  hoverClass: string
   isMark: boolean
 }

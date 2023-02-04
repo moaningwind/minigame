@@ -1,51 +1,60 @@
 <script setup lang="ts">
-import { BLACK_CHESS, Empty_CHESS } from '~/composables/gobang'
+import { BLACK_CHESS, EMPTY_CHESS } from '~/composables/gobang'
 import type { PieceState } from '~/types'
 
-const props = defineProps<{ block: PieceState; computerLastChess: number[] }>()
+const { block } = defineProps<{ block: PieceState }>()
 
-const isEmpty = computed(() => props.block.status === Empty_CHESS)
+// TODO Defining eslint with const throw error
+let hoverClass = $ref('')
+
+const isEmpty = $computed(() => block.status === EMPTY_CHESS)
 
 function getPieceClass(block: PieceState) {
-  if (isEmpty.value)
-    return `${block.hoverClass}`
+  if (isEmpty)
+    return `${hoverClass}`
 
-  return `${block.hoverClass} ${block.status === BLACK_CHESS ? 'black' : 'white'}${block.isMark ? '-mark' : ''}`
+  return `${hoverClass} ${block.status === BLACK_CHESS ? 'black' : 'white'}${block.isMark ? '-mark' : ''}`
 }
 
 function handleEnter(block: PieceState) {
-  if (isEmpty.value) {
+  if (isEmpty) {
     const { x, y } = block
     if (x === 0 && y === 0)
-      block.hoverClass = 'hover-up-left'
+      hoverClass = 'hover-up-left'
     else if (x === 0 && y === 14)
-      block.hoverClass = 'hover-up-right'
+      hoverClass = 'hover-up-right'
     else if (x === 14 && y === 0)
-      block.hoverClass = 'hover-down-left'
+      hoverClass = 'hover-down-left'
     else if (x === 14 && y === 14)
-      block.hoverClass = 'hover-down-right'
+      hoverClass = 'hover-down-right'
     else if (x === 0)
-      block.hoverClass = 'hover-up'
+      hoverClass = 'hover-up'
     else if (x === 14)
-      block.hoverClass = 'hover-down'
+      hoverClass = 'hover-down'
     else if (y === 0)
-      block.hoverClass = 'hover-left'
+      hoverClass = 'hover-left'
     else if (y === 14)
-      block.hoverClass = 'hover-right'
-    else block.hoverClass = 'hover'
+      hoverClass = 'hover-right'
+    else hoverClass = 'hover'
   }
 }
 
 function handleLeave(block: PieceState) {
-  if (isEmpty.value)
-    block.hoverClass = ''
+  if (isEmpty)
+    hoverClass = ''
 }
+
+watch(() => isEmpty, () => {
+  if (!isEmpty)
+    hoverClass = ''
+})
 </script>
 
 <template>
   <div
     w-9
     h-9
+    cursor-pointer
     :class="getPieceClass(block)"
     @mouseenter="handleEnter(block)"
     @mouseleave="handleLeave(block)"

@@ -1,5 +1,6 @@
 <script setup lang="ts" generic="T extends any, O extends any">
 import { GamePlay } from '~/composables/gobang'
+
 defineOptions({
   name: 'IndexPage',
 })
@@ -9,16 +10,16 @@ const play = new GamePlay()
 
 <template>
   <div>
-    <div flex="~ gap1" justify-center p4>
+    <div flex="~ gap1" py5 items-center justify-center>
       <button btn @click="play.reset()">
         New Game
       </button>
       <button btn @click="play.reset(false)">
-        Computer Down First
+        Computer First
       </button>
     </div>
 
-    <div border class="chessboard">
+    <div border py5 class="chessboard">
       <div
         v-for="row, y in play.board"
         :key="y"
@@ -29,7 +30,6 @@ const play = new GamePlay()
           v-for="block, x in row"
           :key="x"
           :block="block"
-          :computer-last-chess="play.state.value.computerLastChess"
           @click="play.onClick(block)"
         />
       </div>
