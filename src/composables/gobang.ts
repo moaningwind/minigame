@@ -1,14 +1,15 @@
 import type { Ref } from 'vue'
 import type { PieceState } from '~/types'
-import { isDark, toggleDark } from '~/composables'
+
+export const isBlack = ref(true)
 
 export const EMPTY_CHESS = 'none'
-export const BLACK_CHESS = 'block'
+export const BLACK_CHESS = 'black'
 export const WHITE_CHESS = 'white'
 
 export type GameStatus = 'ready' | 'play' | 'won' | 'lost'
 
-export type ChessColor = 'block' | 'white'
+export type ChessColor = 'black' | 'white'
 
 interface GameState {
   isManMachine: boolean
@@ -137,25 +138,26 @@ export class GamePlay {
         this.countAndSideX(x, y, playerColor).count >= 5
         || this.countAndSideY(x, y, playerColor).count >= 5
         || this.countAndSideYX(x, y, playerColor).count >= 5
-        || this.countAndSideYX(x, y, playerColor).count >= 5
+        || this.countAndSideXY(x, y, playerColor).count >= 5
       )
         return this.gameOver('won')
 
       this.compterTurn()
     }
     else {
-      const chessColor = isDark.value ? BLACK_CHESS : WHITE_CHESS
+      const chessColor = isBlack.value ? BLACK_CHESS : WHITE_CHESS
+      isBlack.value = !isBlack.value
+
       this.dropPiece(x, y, chessColor)
 
       this.clearAllMark()
       this.markPiece(x, y)
-      toggleDark()
 
       if (
         this.countAndSideX(x, y, chessColor).count >= 5
         || this.countAndSideY(x, y, chessColor).count >= 5
         || this.countAndSideYX(x, y, chessColor).count >= 5
-        || this.countAndSideYX(x, y, chessColor).count >= 5
+        || this.countAndSideXY(x, y, chessColor).count >= 5
       ) {
         this.markWonPieces(x, y, chessColor)
         setTimeout(() => {

@@ -1,4 +1,4 @@
-export type ChessStatus = 'none' | 'block' | 'white'
+export type ChessStatus = 'none' | 'black' | 'white'
 
 export interface PieceState {
   x: number
