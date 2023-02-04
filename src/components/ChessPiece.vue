@@ -22,19 +22,19 @@ function handleEnter(block: PieceState) {
     if (x === 0 && y === 0)
       hoverClass = 'hover-up-left'
     else if (x === 0 && y === 14)
-      hoverClass = 'hover-up-right'
-    else if (x === 14 && y === 0)
       hoverClass = 'hover-down-left'
+    else if (x === 14 && y === 0)
+      hoverClass = 'hover-up-right'
     else if (x === 14 && y === 14)
       hoverClass = 'hover-down-right'
     else if (x === 0)
-      hoverClass = 'hover-up'
-    else if (x === 14)
-      hoverClass = 'hover-down'
-    else if (y === 0)
       hoverClass = 'hover-left'
-    else if (y === 14)
+    else if (x === 14)
       hoverClass = 'hover-right'
+    else if (y === 0)
+      hoverClass = 'hover-up'
+    else if (y === 14)
+      hoverClass = 'hover-down'
     else hoverClass = 'hover'
   }
 }
