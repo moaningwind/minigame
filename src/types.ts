@@ -1,4 +1,8 @@
-export type ChessStatus = 'none' | 'black' | 'white'
+export enum ChessStatus {
+  EMPTY,
+  BLACK,
+  WHITE,
+}
 
 export interface PieceState {
   x: number

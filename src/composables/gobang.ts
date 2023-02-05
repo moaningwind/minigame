@@ -1,15 +1,12 @@
 import type { Ref } from 'vue'
 import type { PieceState } from '~/types'
+import { ChessStatus } from '~/types'
 
 export const isBlack = ref(true)
 
-export const EMPTY_CHESS = 'none'
-export const BLACK_CHESS = 'black'
-export const WHITE_CHESS = 'white'
+export type GameStatus = 'play' | 'won' | 'lost'
 
-export type GameStatus = 'ready' | 'play' | 'won' | 'lost'
-
-export type ChessColor = 'black' | 'white'
+export type ChessColor = ChessStatus.BLACK | ChessStatus.WHITE
 
 interface GameState {
   isManMachine: boolean
@@ -62,15 +59,15 @@ export class GamePlay {
   reset(playerFirst = true, isManMachine = true) {
     this.state.value = {
       isManMachine,
-      status: 'ready',
-      playerColor: playerFirst ? BLACK_CHESS : WHITE_CHESS,
-      computerColor: playerFirst ? WHITE_CHESS : BLACK_CHESS,
+      status: 'play',
+      playerColor: playerFirst ? ChessStatus.BLACK : ChessStatus.WHITE,
+      computerColor: playerFirst ? ChessStatus.WHITE : ChessStatus.BLACK,
       board: Array.from({ length: 15 }, (_, y) =>
         Array.from({ length: 15 },
           (_, x): PieceState => ({
             x,
             y,
-            status: EMPTY_CHESS,
+            status: ChessStatus.EMPTY,
             isMark: false,
           }),
         ),
@@ -79,15 +76,9 @@ export class GamePlay {
 
     if (isManMachine)
       !playerFirst && this.compterTurn()
-
-    this.gameStart()
   }
 
-  gameStart() {
-    this.state.value.status = 'play'
-  }
-
-  gameOver(status: GameStatus) {
+  gameOver(status: Exclude<GameStatus, 'play'>) {
     const isPlayerWon = status === 'won'
     const x = isPlayerWon ? this.playerLastPosition![0] : this.computerLastPosition![0]
     const y = isPlayerWon ? this.playerLastPosition![1] : this.computerLastPosition![1]
@@ -126,7 +117,7 @@ export class GamePlay {
    */
   playerTurn(block: PieceState) {
     const { x, y, status } = block
-    if (status !== EMPTY_CHESS)
+    if (status !== ChessStatus.EMPTY)
       return
 
     if (this.isManMachine) {
@@ -145,7 +136,7 @@ export class GamePlay {
       this.compterTurn()
     }
     else {
-      const chessColor = isBlack.value ? BLACK_CHESS : WHITE_CHESS
+      const chessColor = isBlack.value ? ChessStatus.BLACK : ChessStatus.WHITE
       isBlack.value = !isBlack.value
 
       this.dropPiece(x, y, chessColor)
@@ -173,7 +164,7 @@ export class GamePlay {
   compterTurn() {
     const nonEmptyBoard = this.board
       .flat()
-      .filter(item => item.status === EMPTY_CHESS)
+      .filter(item => item.status === ChessStatus.EMPTY)
       .map(({ x, y }) => ({ x, y, weight: this.calcWeight(x, y) }))
     const maxWeight = Math.max(...nonEmptyBoard.map(({ weight }) => weight))
     const { x, y } = nonEmptyBoard.find(({ weight }) => weight === maxWeight)!
@@ -220,7 +211,7 @@ export class GamePlay {
         count++
       }
       else {
-        if (this.board[y][m].status === EMPTY_CHESS)
+        if (this.board[y][m].status === ChessStatus.EMPTY)
           side1 = true
 
         break
@@ -232,7 +223,7 @@ export class GamePlay {
         count++
       }
       else {
-        if (this.board[y][m].status === EMPTY_CHESS)
+        if (this.board[y][m].status === ChessStatus.EMPTY)
           side2 = true
 
         break
@@ -257,7 +248,7 @@ export class GamePlay {
         count++
       }
       else {
-        if (this.board[n][x].status === EMPTY_CHESS)
+        if (this.board[n][x].status === ChessStatus.EMPTY)
           side1 = true
 
         break
@@ -269,7 +260,7 @@ export class GamePlay {
         count++
       }
       else {
-        if (this.board[n][x].status === EMPTY_CHESS)
+        if (this.board[n][x].status === ChessStatus.EMPTY)
           side2 = true
 
         break
@@ -294,7 +285,7 @@ export class GamePlay {
         count++
       }
       else {
-        if (this.board[n][m].status === EMPTY_CHESS)
+        if (this.board[n][m].status === ChessStatus.EMPTY)
           side1 = true
 
         break
@@ -306,7 +297,7 @@ export class GamePlay {
         count++
       }
       else {
-        if (this.board[n][m].status === EMPTY_CHESS)
+        if (this.board[n][m].status === ChessStatus.EMPTY)
           side2 = true
 
         break
@@ -331,7 +322,7 @@ export class GamePlay {
         count++
       }
       else {
-        if (this.board[n][m].status === EMPTY_CHESS)
+        if (this.board[n][m].status === ChessStatus.EMPTY)
           side1 = true
 
         break
@@ -343,7 +334,7 @@ export class GamePlay {
         count++
       }
       else {
-        if (this.board[n][m].status === EMPTY_CHESS)
+        if (this.board[n][m].status === ChessStatus.EMPTY)
           side2 = true
 
         break

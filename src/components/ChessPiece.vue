@@ -1,19 +1,18 @@
 <script setup lang="ts">
-import { BLACK_CHESS, EMPTY_CHESS } from '~/composables/gobang'
 import type { PieceState } from '~/types'
+import { ChessStatus } from '~/types'
 
 const { block } = defineProps<{ block: PieceState }>()
 
-// TODO Defining eslint with const throw error
 let hoverClass = $ref('')
 
-const isEmpty = $computed(() => block.status === EMPTY_CHESS)
+const isEmpty = $computed(() => block.status === ChessStatus.EMPTY)
 
 function getPieceClass(block: PieceState) {
   if (isEmpty)
     return `${hoverClass}`
 
-  return `${hoverClass} ${block.status === BLACK_CHESS ? 'black' : 'white'}${block.isMark ? '-mark' : ''}`
+  return `${hoverClass} ${block.status === ChessStatus.BLACK ? 'black' : 'white'}${block.isMark ? '-mark' : ''}`
 }
 
 function handleEnter(block: PieceState) {
