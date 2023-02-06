@@ -2,14 +2,13 @@ import type { Ref } from 'vue'
 import type { PieceState } from '~/types'
 import { ChessStatus } from '~/types'
 
-export const isBlack = ref(true)
+type GameStatus = 'play' | 'won' | 'lost'
 
-export type GameStatus = 'play' | 'won' | 'lost'
-
-export type ChessColor = ChessStatus.BLACK | ChessStatus.WHITE
+type ChessColor = ChessStatus.BLACK | ChessStatus.WHITE
 
 interface GameState {
-  isManMachine: boolean
+  manMachine: boolean
+  blackTurn?: boolean
   status: GameStatus
   playerColor: ChessColor
   computerColor: ChessColor
@@ -36,10 +35,6 @@ export class GamePlay {
     return this.state.value.board
   }
 
-  get isManMachine() {
-    return this.state.value.isManMachine
-  }
-
   get playerColor() {
     return this.state.value.playerColor
   }
@@ -56,9 +51,9 @@ export class GamePlay {
     return this.state.value.computerLastPosition
   }
 
-  reset(playerFirst = true, isManMachine = true) {
+  reset(playerFirst = true, manMachine = true) {
     this.state.value = {
-      isManMachine,
+      manMachine,
       status: 'play',
       playerColor: playerFirst ? ChessStatus.BLACK : ChessStatus.WHITE,
       computerColor: playerFirst ? ChessStatus.WHITE : ChessStatus.BLACK,
@@ -74,8 +69,9 @@ export class GamePlay {
       ),
     }
 
-    if (isManMachine)
+    if (manMachine)
       !playerFirst && this.compterTurn()
+    else this.state.value.blackTurn = true
   }
 
   gameOver(status: Exclude<GameStatus, 'play'>) {
@@ -112,6 +108,34 @@ export class GamePlay {
     this.board[y][x].isMark = true
   }
 
+  isGameOver(x: number, y: number, chessColor: ChessColor) {
+    return this.countAndSideX(x, y, chessColor).count >= 5
+    || this.countAndSideY(x, y, chessColor).count >= 5
+    || this.countAndSideYX(x, y, chessColor).count >= 5
+    || this.countAndSideXY(x, y, chessColor).count >= 5
+  }
+
+  onClick(block: PieceState) {
+    const { x, y, status } = block
+    if (status !== ChessStatus.EMPTY)
+      return
+
+    const chessColor = this.state.value.blackTurn ? ChessStatus.BLACK : ChessStatus.WHITE
+    this.state.value.blackTurn = !this.state.value.blackTurn
+
+    this.dropPiece(x, y, chessColor)
+
+    this.clearAllMark()
+    this.markPiece(x, y)
+
+    if (this.isGameOver(x, y, chessColor)) {
+      this.markWonPieces(x, y, chessColor)
+      setTimeout(() => {
+        alert(`${chessColor} won`)
+      })
+    }
+  }
+
   /**
    * 玩家回合
    */
@@ -120,42 +144,13 @@ export class GamePlay {
     if (status !== ChessStatus.EMPTY)
       return
 
-    if (this.isManMachine) {
-      const playerColor = this.playerColor
-      this.dropPiece(x, y, playerColor)
-      this.state.value.playerLastPosition = [x, y]
+    this.dropPiece(x, y, this.playerColor)
+    this.state.value.playerLastPosition = [x, y]
 
-      if (
-        this.countAndSideX(x, y, playerColor).count >= 5
-        || this.countAndSideY(x, y, playerColor).count >= 5
-        || this.countAndSideYX(x, y, playerColor).count >= 5
-        || this.countAndSideXY(x, y, playerColor).count >= 5
-      )
-        return this.gameOver('won')
+    if (this.isGameOver(x, y, this.playerColor))
+      return this.gameOver('won')
 
-      this.compterTurn()
-    }
-    else {
-      const chessColor = isBlack.value ? ChessStatus.BLACK : ChessStatus.WHITE
-      isBlack.value = !isBlack.value
-
-      this.dropPiece(x, y, chessColor)
-
-      this.clearAllMark()
-      this.markPiece(x, y)
-
-      if (
-        this.countAndSideX(x, y, chessColor).count >= 5
-        || this.countAndSideY(x, y, chessColor).count >= 5
-        || this.countAndSideYX(x, y, chessColor).count >= 5
-        || this.countAndSideXY(x, y, chessColor).count >= 5
-      ) {
-        this.markWonPieces(x, y, chessColor)
-        setTimeout(() => {
-          alert(`${chessColor} won`)
-        })
-      }
-    }
+    this.compterTurn()
   }
 
   /**
@@ -175,7 +170,8 @@ export class GamePlay {
     this.clearAllMark()
     this.markPiece(x, y)
 
-    const isComputerWon = (maxWeight >= 100000 && maxWeight < 250000) || maxWeight >= 500000
+    // const isComputerWon = (maxWeight >= 100000 && maxWeight < 250000) || maxWeight >= 500000
+    const isComputerWon = this.isGameOver(x, y, this.computerColor)
     if (isComputerWon)
       this.gameOver('lost')
   }

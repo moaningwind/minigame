@@ -36,7 +36,7 @@ const play = new GamePlay()
           v-for="block, x in row"
           :key="x"
           :block="block"
-          @click="play.playerTurn(block)"
+          @click="play.state.value.manMachine ? play.playerTurn(block) : play.onClick(block)"
         />
       </div>
     </div>
