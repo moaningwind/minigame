@@ -46,8 +46,8 @@ function newGame(difficulty: 'easy' | 'medium' | 'hard') {
       <td
         v-for="block, x in row"
         :key="x"
-        w4
-        h4
+        w6
+        h6
         border
         :class="block.status"
       >
@@ -62,7 +62,6 @@ function newGame(difficulty: 'easy' | 'medium' | 'hard') {
   background-color: orangered;
 }
 .snakebody {
-  /* 橙黄色 */
   background-color: #ffcc00;
 }
 .food {

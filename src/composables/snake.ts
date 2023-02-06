@@ -1,8 +1,8 @@
-import type { EffectScope, Ref } from 'vue'
+import type { EffectScope } from 'vue'
 import type { BlockState } from '~/types'
 import { BlockStatus, keyCode } from '~/types'
 
-type GameStatus = 'play' | 'pause' | 'over'
+type GameStatus = 'ready' | 'play' | 'pause' | 'over'
 
 interface GameState {
   status: GameStatus
@@ -13,13 +13,22 @@ interface GameState {
   board: BlockState[][]
 }
 
-let scope: EffectScope | undefined
+type Nullable<T> = T | undefined
+
+let scope: Nullable<EffectScope>
 
 export class GamePlay {
-  state = ref({}) as Ref<GameState>
+  state = ref<GameState>({
+    status: 'ready',
+    currentKey: keyCode.RIGHT,
+    snakePosition: [],
+    board: [],
+  })
 
   constructor(public rows: number, public cols: number, public speed: number) {
-    useEventListener(document, 'onkeydown', this.trigger)
+    useEventListener(document, 'keydown', (ev) => {
+      this.trigger(ev)
+    })
   }
 
   get board() {
@@ -69,13 +78,22 @@ export class GamePlay {
     scope = effectScope()
 
     scope.run(() => {
-      watchEffect(() => {
+      watch(this.snakePosition, () => {
+        this.board
+          .flat()
+          .filter(item => item.status !== BlockStatus.FOOD)
+          .forEach(({ x, y }) => {
+            this.board[y][x].status = BlockStatus.NULL
+          })
+
         this.snakePosition.forEach(({ x, y }, i) => {
-          if (i === 0)
-            this.board[y][x].status = BlockStatus.HEAD
-          else this.board[y][x].status = BlockStatus.BODY
+          if (x >= 0 && x < this.cols && y >= 0 && y < this.rows) {
+            if (i === 0)
+              this.board[y][x].status = BlockStatus.HEAD
+            else this.board[y][x].status = BlockStatus.BODY
+          }
         })
-      })
+      }, { immediate: true })
 
       watchEffect(() => {
         if (this.state.value.status === 'play') {
@@ -101,18 +119,20 @@ export class GamePlay {
   }
 
   trigger(ev: KeyboardEvent) {
+    if (this.state.value.status === 'ready')
+      return
     // TODO use ev.key
     const eKey = ev.keyCode // 获取按键键码值
     // 如果按下的是方向键，并且不是当前方向，也不是反方向和暂停状态
     if (
       eKey >= keyCode.LEFT
-      && eKey <= keyCode.RIGHT
+      && eKey <= keyCode.DOWN
       && eKey !== this.currentKey
       && !(
-        (this.currentKey === 37 && eKey === 39)
-        || (this.currentKey === 38 && eKey === 40)
-        || (this.currentKey === 39 && eKey === 37)
-        || (this.currentKey === 40 && eKey === 38)
+        (this.currentKey === keyCode.LEFT && eKey === keyCode.RIGHT)
+        || (this.currentKey === keyCode.UP && eKey === keyCode.DOWN)
+        || (this.currentKey === keyCode.RIGHT && eKey === keyCode.LEFT)
+        || (this.currentKey === keyCode.DOWN && eKey === keyCode.UP)
       )
       && this.state.value.status !== 'pause'
     ) {
@@ -128,8 +148,8 @@ export class GamePlay {
   }
 
   move() {
-    const { snakePosition } = this
-    switch (this.currentKey) {
+    const { currentKey, snakePosition } = this
+    switch (currentKey) {
       case keyCode.LEFT:
         // 蛇头撞到边界
         if (snakePosition[0].x < 0) {
@@ -182,15 +202,22 @@ export class GamePlay {
     // 从蛇身的第四节开始判断是否撞到自己
     for (let i = 3; i < snakePosition.length; i++) {
       if (snakePosition[i].x === snakePosition[0].x && snakePosition[i].y === snakePosition[0].y) {
-        this.gameOver() // 游戏结束
+        this.gameOver()
         return
       }
     }
   }
 
+  clearAll() {
+    this.board.flat().forEach(({ x, y }) => {
+      this.board[y][x].status = BlockStatus.NULL
+    })
+  }
+
   gameOver() {
-    alert('game over')
     window.clearInterval(this.state.value.timer)
     this.state.value.status = 'over'
+    this.clearAll()
+    alert('game over')
   }
 }
