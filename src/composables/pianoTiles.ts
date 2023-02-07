@@ -1,7 +1,6 @@
-import type { Ref } from 'vue'
 import type { TileState } from '~/types'
 
-type GameStatus = 'ready' | 'play' | 'pause' | 'over'
+type GameStatus = 'ready' | 'play'
 
 interface GameState {
   status: GameStatus
@@ -11,36 +10,37 @@ interface GameState {
 }
 
 export class GamePlay {
-  state = ref() as Ref<GameState>
+  state = ref<GameState>({
+    status: 'ready',
+    top: -500,
+    board: [],
+  })
 
-  constructor(public rows: number, public cols: number, public speed: number) {
-    this.state.value = {
-      status: 'ready',
-      top: -(100 * rows),
-      board: [],
-    }
+  constructor() {
+    watchEffect(() => {
+      if (this.state.value.status === 'play') {
+        this.state.value.timer = window.setInterval(() => {
+          this.move()
+        }, 16)
+      }
+      else {
+        window.clearInterval(this.state.value.timer)
+      }
+    })
   }
 
   get board() {
     return this.state.value.board
   }
 
-  get top() {
-    return this.state.value.top
-  }
-
-  reset(rows = this.rows, cols = this.cols, speed = this.speed) {
-    this.rows = rows
-    this.cols = cols
-    this.speed = speed
-
+  reset() {
     this.state.value = {
       status: 'play',
-      top: -(100 * rows),
-      board: Array.from({ length: rows },
+      top: -500,
+      board: Array.from({ length: 5 },
         (_, y) => {
-          const random = Math.floor(Math.random() * cols)
-          return Array.from({ length: cols },
+          const random = Math.floor(Math.random() * 4)
+          return Array.from({ length: 4 },
             (_, x): TileState => ({
               x,
               y,
@@ -49,17 +49,6 @@ export class GamePlay {
           )
         }),
     }
-
-    watchEffect(() => {
-      if (this.state.value.status === 'play') {
-        this.state.value.timer = window.setInterval(() => {
-          this.move()
-        }, this.speed)
-      }
-      else {
-        window.clearInterval(this.state.value.timer)
-      }
-    })
   }
 
   onClick(block: TileState) {
@@ -69,20 +58,31 @@ export class GamePlay {
   }
 
   move() {
-    if (3 + this.top > 0)
+    if (3 + this.state.value.top > 0)
       this.state.value.top = 0
 
     else
       this.state.value.top += 3
 
-    if (this.top === 0) {
-      const random = Math.floor(Math.random() * this.cols)
-      this.board.unshift(this.board.pop()!.map(({ x, y }, i) => ({ x, y, isBlack: i === random })))
-      this.state.value.top = -100
+    if (this.state.value.top === 0) {
+      const random = Math.floor(Math.random() * 4)
+      const lastRow = this.board.pop()!
+      if (lastRow.every(({ isBlack }) => isBlack === false)) {
+        this.board.unshift(lastRow.map(({ x, y }, i) => ({ x, y, isBlack: i === random })))
+        this.state.value.top = -100
+      }
+      else {
+        this.gameOver()
+      }
     }
   }
 
   gameOver() {
-
+    this.state.value = {
+      status: 'ready',
+      top: -500,
+      board: [],
+    }
+    alert('game over')
   }
 }

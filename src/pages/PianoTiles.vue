@@ -5,21 +5,7 @@ defineOptions({
   name: 'PianoTilesPage',
 })
 
-const play = new GamePlay(5, 4, 16)
-
-function newGame(difficulty: 'easy' | 'medium' | 'hard') {
-  switch (difficulty) {
-    case 'easy':
-      play.reset(4, 4, 400)
-      break
-    case 'medium':
-      play.reset(4, 4, 200)
-      break
-    case 'hard':
-      play.reset(4, 4, 100)
-      break
-  }
-}
+const play = new GamePlay()
 </script>
 
 <template>
@@ -27,18 +13,9 @@ function newGame(difficulty: 'easy' | 'medium' | 'hard') {
     <button btn @click="play.reset()">
       New Game
     </button>
-    <button btn @click="newGame('easy')">
-      Easy
-    </button>
-    <button btn @click="newGame('medium')">
-      Medium
-    </button>
-    <button btn @click="newGame('hard')">
-      Hard
-    </button>
   </div>
 
-  <div ma h100 border="2 solid gray" overflow="hidden">
+  <div ma w81 h100 border="2 solid gray" overflow="hidden">
     <div relative :style="{ top: `${play.state.value.top}px` }">
       <div
         v-for="row, y in play.board" :key="y"
