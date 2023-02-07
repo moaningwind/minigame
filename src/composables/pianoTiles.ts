@@ -4,10 +4,11 @@ type GameStatus = 'ready' | 'play'
 
 interface GameState {
   status: GameStatus
-  timer?: number
   top: number
   board: TileState[][]
 }
+
+let timer: number | undefined
 
 export class GamePlay {
   state = ref<GameState>({
@@ -19,12 +20,12 @@ export class GamePlay {
   constructor() {
     watchEffect(() => {
       if (this.state.value.status === 'play') {
-        this.state.value.timer = window.setInterval(() => {
+        timer = window.setInterval(() => {
           this.move()
         }, 16)
       }
       else {
-        window.clearInterval(this.state.value.timer)
+        window.clearInterval(timer)
       }
     })
   }
@@ -58,6 +59,8 @@ export class GamePlay {
   }
 
   move() {
+    if (this.state.value.status !== 'play')
+      return
     if (3 + this.state.value.top > 0)
       this.state.value.top = 0
 

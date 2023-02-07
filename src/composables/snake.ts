@@ -1,4 +1,4 @@
-import type { EffectScope } from 'vue'
+import type { WatchStopHandle } from 'vue'
 import type { BlockState } from '~/types'
 import { BlockStatus, keyCode } from '~/types'
 
@@ -6,7 +6,6 @@ type GameStatus = 'ready' | 'play' | 'pause' | 'over'
 
 interface GameState {
   status: GameStatus
-  timer?: number
   currentKey: keyCode
   snakePosition: { x: number; y: number }[]
   foodPosition?: { x: number; y: number }
@@ -15,17 +14,15 @@ interface GameState {
 
 type Nullable<T> = T | undefined
 
-let scope: Nullable<EffectScope>
+let unwatch: Nullable<WatchStopHandle>
+
+let timer: Nullable<number>
 
 export class GamePlay {
   state = ref<GameState>({
     status: 'ready',
     currentKey: keyCode.RIGHT,
-    snakePosition: [
-      { x: 2, y: 0 },
-      { x: 1, y: 0 },
-      { x: 0, y: 0 },
-    ],
+    snakePosition: [],
     board: [],
   })
 
@@ -34,33 +31,14 @@ export class GamePlay {
       this.trigger(ev)
     })
 
-    watch(() => this.snakePosition, () => {
-      this.board
-        .flat()
-        .filter(item => item.status !== BlockStatus.FOOD)
-        .forEach(({ x, y }) => {
-          this.board[y][x].status = BlockStatus.NULL
-        })
-
-      this.snakePosition.forEach(({ x, y }, i) => {
-        if (x >= 0 && x < this.cols && y >= 0 && y < this.rows) {
-          if (i === 0)
-            this.board[y][x].status = BlockStatus.HEAD
-          else this.board[y][x].status = BlockStatus.BODY
-        }
-      })
-    }, {
-      deep: true,
-    })
-
     watchEffect(() => {
       if (this.state.value.status === 'play') {
-        this.state.value.timer = window.setInterval(() => {
+        timer = window.setInterval(() => {
           this.move()
         }, this.interval)
       }
       else {
-        window.clearInterval(this.state.value.timer)
+        window.clearInterval(timer)
       }
     })
   }
@@ -82,8 +60,6 @@ export class GamePlay {
   }
 
   reset(rows = this.rows, cols = this.cols, interval = this.interval) {
-    scope?.stop()
-
     this.rows = rows
     this.cols = cols
     this.interval = interval
@@ -109,38 +85,24 @@ export class GamePlay {
 
     this.generateFood()
 
-    scope = effectScope()
+    unwatch && unwatch()
 
-    scope.run(() => {
-      // TODO 传入动态数组 能自动收集依赖？
-      // watch(this.snakePosition, () => {
-      //   this.board
-      //     .flat()
-      //     .filter(item => item.status !== BlockStatus.FOOD)
-      //     .forEach(({ x, y }) => {
-      //       this.board[y][x].status = BlockStatus.NULL
-      //     })
+    unwatch = watch(this.snakePosition, () => {
+      this.board
+        .flat()
+        .filter(item => item.status !== BlockStatus.FOOD)
+        .forEach(({ x, y }) => {
+          this.board[y][x].status = BlockStatus.NULL
+        })
 
-      //   this.snakePosition.forEach(({ x, y }, i) => {
-      //     if (x >= 0 && x < this.cols && y >= 0 && y < this.rows) {
-      //       if (i === 0)
-      //         this.board[y][x].status = BlockStatus.HEAD
-      //       else this.board[y][x].status = BlockStatus.BODY
-      //     }
-      //   })
-      // }, { immediate: true })
-
-      // watchEffect(() => {
-      //   if (this.state.value.status === 'play') {
-      //     this.state.value.timer = window.setInterval(() => {
-      //       this.move()
-      //     }, this.interval)
-      //   }
-      //   else {
-      //     window.clearInterval(this.state.value.timer)
-      //   }
-      // })
-    })
+      this.snakePosition.forEach(({ x, y }, i) => {
+        if (x >= 0 && x < this.cols && y >= 0 && y < this.rows) {
+          if (i === 0)
+            this.board[y][x].status = BlockStatus.HEAD
+          else this.board[y][x].status = BlockStatus.BODY
+        }
+      })
+    }, { immediate: true })
   }
 
   generateFood() {
