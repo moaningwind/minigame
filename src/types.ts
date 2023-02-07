@@ -31,3 +31,9 @@ export enum keyCode {
   DOWN,
   SPACE = 32,
 }
+
+export interface TileState {
+  x: number
+  y: number
+  isBlack: boolean
+}
