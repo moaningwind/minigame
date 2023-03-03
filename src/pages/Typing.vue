@@ -37,8 +37,7 @@ let highscore = $ref(0)
 
 const animation = reactive({
   wheel: true,
-  fade: true,
-  bounce: false,
+  bouncy: false,
 })
 
 function setColors() {
@@ -102,8 +101,7 @@ function handleCountdown() {
     if (countdown === 0) {
       elInput?.blur()
       message = 'Game Over'
-      animation.fade = true
-      animation.bounce = false
+      animation.bouncy = false
       setTimeout(() => {
         clearInterval(interval)
         interval = undefined
@@ -116,10 +114,12 @@ function handleCountdown() {
 }
 
 function handleOninput() {
+  if (!interval)
+    interval = setInterval(handleCountdown, 1000)
+
   animation.wheel = false
 
-  animation.fade = false
-  animation.bounce = false
+  animation.bouncy = false
 
   if (inputValue === currentWord) {
     clearInterval(interval)
@@ -136,7 +136,7 @@ function handleOninput() {
       currentIndex += 1
       inputValue = ''
 
-      animation.bounce = true
+      animation.bouncy = true
 
       setColors()
     }
@@ -161,21 +161,56 @@ function getLetterColor(letter: string, index: number) {
 </script>
 
 <template>
-  <div class="wrapper">
-    <div flex flex-col mt12 mr25 text-center>
+  <div
+    class="h-100vh justify-center items-center"
+    flex="~"
+    bg="from-#1e2530 to-#11151c gradient-to-tr"
+    font="mono"
+  >
+    <div
+      flex="~ col"
+      m="t-12 r-25"
+    >
       <div>
-        <p class="counthead">
+        <div
+          font="tracking-1px"
+          text="white/60 5"
+          animated="slide-in-left duration-1s"
+        >
           Countdown
-        </p>
-        <p class="countdown">
+        </div>
+        <div
+          text="white/80 54px"
+          animated="zoom-in duration-1s"
+        >
           {{ countdown }}
-        </p>
+        </div>
       </div>
-      <div class="wordlist">
-        <div class="arrow" />
-        <div class="scrollingwords" :style="{ marginTop: `${offset}px` }">
-          <ul>
-            <li v-for="item in realWords" :key="item" :class="{ active: item === currentWord }">
+      <div
+        class="h-325px w-230px relative of-hidden"
+        m="t-50px"
+        border="l-5 #222a38"
+      >
+        <div
+          class="top-137px absolute size-0"
+          border="y-transparent y-13 l-13 l-#222a38"
+          animated="fade-in duration-1s"
+        />
+        <div
+          class="w-50"
+          m="l-10"
+          text="left"
+          transition="margin duration-500"
+          :style="{ marginTop: `${offset}px` }"
+        >
+          <ul animated="fade-in-down duration-1s">
+            <li
+              v-for="item in realWords" :key="item"
+              m="b-10px"
+              text="white/20 18px"
+              transition="color"
+              :class="{ active: item === currentWord }"
+            >
               {{ item }}
             </li>
           </ul>
@@ -183,27 +218,69 @@ function getLetterColor(letter: string, index: number) {
       </div>
     </div>
 
-    <div flex flex-col justify-center items-center mt--25>
-      <div class="circular">
+    <div
+      class="justify-center items-center"
+      flex="~ col"
+      m="t--25"
+    >
+      <div
+        class="relative justify-center items-center size-350px"
+        flex="~"
+        bg="#11151c"
+        border="rounded-1/2"
+        shadow="black/50 [2px,10px,30px]"
+      >
         <div
           v-for="index in 4" :key="index" ref="quarters"
-          class="quarters" :class="[animation.wheel ? `wheel${index}` : '']"
+          class="top-0 left-0 absolute size-175px"
+          bg="#11151c"
+          border="rounded-tl-175px t-5 l-5 #00FF00"
+          transform="rotate--90 origin-bottom-right"
+          transition="all duration-100 ease-out"
+          :class="[animation.wheel ? `wheel${index}` : '']"
         />
-        <div class="bouncy" :class="{ 'fade-in': animation.fade, 'bounce': animation.bounce }" />
-        <p class="word">
+        <div
+          class="absolute size-75"
+          border="rounded-1/2 1 black/10"
+          shadow="black/10 [0,0,6]"
+          :class="{
+            bouncy: animation.bouncy,
+          }"
+        />
+        <div
+          absolute
+          text="10 white/70"
+          animated="rotate-in duration-1s"
+        >
           <span
             v-for="(letter, index) in [...currentWord]" :key="letter + index"
             :class="getLetterColor(letter, index)"
           >
             {{ letter }}
           </span>
-        </p>
+        </div>
       </div>
       <div>
+        <div
+          m="y-10"
+          font="bold tracking-1px"
+          text="18px white/80"
+          animated="zoom-in duration-1s"
+        >
+          {{ message }}
+        </div>
         <input
           ref="elInput"
           v-model="inputValue"
-          class="input"
+          class="cursor-pointer outline-none w100"
+          p="y14px x12px"
+          bg="#222a38 focus:white/85"
+          font="bold tracking-0.7px"
+          text="black center 14pt"
+          border="rounded-30px none"
+          shadow="black/50 [2px,10px,30px]"
+          transition="colors"
+          animated="zoom-in duration-1s"
           type="text"
           :placeholder="placeholder"
           spellcheck="false"
@@ -213,34 +290,49 @@ function getLetterColor(letter: string, index: number) {
           @keyup.enter="handleToggle"
         >
       </div>
-      <div class="message">
-        {{ message }}
-      </div>
     </div>
 
-    <div text-center>
-      <div flex>
-        <div mx-25>
-          <p class="scorehead">
-            Score
-          </p>
-          <p class="score">
-            {{ score }}
-          </p>
+    <div flex="~">
+      <div m="x25">
+        <div
+          font="tracking-1px"
+          text="20px white/60"
+          animated="zoom-in duration-1s"
+        >
+          Score
         </div>
-        <div>
-          <p class="highhead">
-            Your High Score
-          </p>
-          <p class="highscore">
-            {{ highscore }}
-          </p>
+        <div
+          text="54px white/80"
+          animated="zoom-in duration-1s"
+        >
+          {{ score }}
         </div>
       </div>
-      <div class="footer">
-        Author
-        <span text="white"><del>Wind</del></span>
+      <div>
+        <div
+          font="tracking-1px"
+          text="20px white/80"
+          animated="zoom-in duration-1s"
+        >
+          Your High Score
+        </div>
+        <div
+          text="54px white/80"
+          animated="zoom-in duration-1s"
+        >
+          {{ highscore }}
+        </div>
       </div>
+    </div>
+    <div
+      class="right-50px bottom-10px absolute"
+      font="bold tracking-1px"
+      text="14px white/60"
+    >
+      Author
+      <span text="white line-through">
+        Wind
+      </span>
     </div>
   </div>
 </template>
@@ -248,237 +340,27 @@ function getLetterColor(letter: string, index: number) {
 <style scoped>
 @import '~/styles/animation.css';
 
-.wrapper {
-  height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: linear-gradient(35deg, #1e2530, #11151c);
-}
-
-.counthead {
-  font-family: 'Montserrat', Helvetica, sans-serif;
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 20px;
-  letter-spacing: 1px;
-  margin-left: -300px;
-  opacity: 0;
-  animation: slide-right 0.3s ease-in 1.5s forwards, fade-in 0.3s ease-in 1.5s forwards;
-}
-
-.countdown {
-  font-family: 'Paytone One', Helvetica, sans-serif;
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 54px;
-  opacity: 0;
-  animation: shrink 0.3s ease-in-out 1.5s forwards, fade-in 0.3s ease-in-out 1.5s forwards;
-}
-
-.wordlist {
-  position: relative;
-  height: 325px;
-  width: 230px;
-  box-sizing: border-box;
-  overflow: hidden;
-  border-left: 5px solid transparent;
-  margin-top: 50px;
-  animation: showup 0.5s ease-out 2.3s forwards;
-}
-
-.arrow {
-  position: absolute;
-  top: 137px;
-  width: 0;
-  height: 0;
-  border-top: 13px solid transparent;
-  border-bottom: 13px solid transparent;
-  border-left: 13px solid #222a38;
-  opacity: 0;
-  animation: fade-in 0.5s ease-out 2.3s forwards;
-}
-
-.scrollingwords {
-  width: 200px;
-  text-align: left;
-  margin-left: 40px;
-  margin-top: 133px;
-}
-
-.scrollingwords ul {
-  margin-top: 300px;
-  opacity: 0;
-  animation: slide-top 1s ease-out 1.5s forwards, fade-in 1s ease-out 1.5s forwards;
-}
-
-.scrollingwords li {
-  font-family: 'Montserrat', Helvetica, sans-serif;
-  margin-bottom: 10px;
-  color: rgba(255, 255, 255, 0.2);
-  font-size: 18px;
-  transition: font-size 0.2s linear, color 0.2s linear;
-}
-.scrollingwords li.active {
-  font-size: 25px;
-  font-weight: bold;
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.circular {
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 350px;
-  width: 350px;
-  box-sizing: border-box;
-  box-shadow: 2px 10px 30px rgba(0, 0, 0, 0.5);
-  border-radius: 50%;
-  background: #11151c;
-}
-
-.quarters {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 175px;
-  height: 175px;
-  box-sizing: border-box;
-  background: #11151c;
-  border-top-left-radius: 175px;
-  border-top: 5px solid rgb(0, 255, 0);
-  border-left: 5px solid rgb(0, 255, 0);
-  transform: rotate(-90deg);
-  transform-origin: bottom right;
-  transition: all 0.1s ease-out;
+.active {
+  @apply font-bold text-white text-25px text-opacity-70;
 }
 
 .wheel1 {
-  animation: wheel1 1s linear forwards;
+  animation: wheel1 1s linear;
 }
 
 .wheel2 {
-  animation: wheel2 1s linear forwards;
+  animation: wheel2 1s linear;
 }
 
 .wheel3 {
-  animation: wheel3 1s linear forwards;
+  animation: wheel3 1s linear;
 }
 
 .wheel4 {
-  animation: wheel4 1s linear forwards;
+  animation: wheel4 1s linear;
 }
 
 .bouncy {
-  position: absolute;
-  width: 300px;
-  height: 300px;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0px 0px 6px rgba(255, 255, 255, 0.1);
-  opacity: 0;
-}
-
-.fade-in {
-  animation: shrink 0.6s ease-in-out 1.2s forwards, fade-in 0.6s ease-in-out 1.2s forwards;
-  opacity: 1;
-}
-
-.bounce {
-  animation: bounce 1s linear;
-  opacity: 1;
-}
-
-.word {
-  font-family: 'Paytone One', Helvetica, sans-serif;
-  position: absolute;
-  font-size: 40px;
-  color: rgba(255, 255, 255, 0.7);
-  opacity: 0;
-  animation: shrink 0.6s ease-in-out 1.2s forwards, fade-in 0.6s ease-in-out 1.2s forwards;
-}
-
-.input {
-  font-family: 'Montserrat', Helvetica, sans-serif;
-  position: relative;
-  width: 400px;
-  border-radius: 30px;
-  background-color: #222a38;
-  margin-top: 70px;
-  outline: none;
-  box-shadow: 2px 10px 30px rgba(0, 0, 0, 0.5);
-  padding: 14px 12px;
-  text-align: center;
-  color: black;
-  font-weight: bold;
-  font-size: 14pt;
-  transition: background-color 0.1s linear;
-  letter-spacing: 0.7px;
-  opacity: 0;
-  border: none;
-  animation: shrink 0.6s ease-in-out 1.2s forwards, fade-in 0.6s ease-in-out 1.2s forwards;
-  cursor: pointer;
-}
-
-.input:focus {
-  background-color: rgba(255, 255, 255, 0.85);
-}
-
-.message {
-  font-family: 'Montserrat', Helvetica, sans-serif;
-  position: absolute;
-  font-size: 18px;
-  font-weight: bold;
-  color: rgba(255, 255, 255, 0.8);
-  letter-spacing: 1px;
-  margin-top: 320px;
-  opacity: 0;
-  animation: slide-up 0.2s linear 1.5s forwards, fade-in 0.2s linear 1.5s forwards;
-}
-
-.scorehead {
-  font-family: 'Montserrat', Helvetica, sans-serif;
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 20px;
-  letter-spacing: 1px;
-  opacity: 0;
-  animation: shrink 0.3s ease-in 1.5s forwards, fade-in 0.3s ease-in 1.5s forwards;
-}
-
-.score {
-  font-family: 'Paytone One', Helvetica, sans-serif;
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 54px;
-  opacity: 0;
-  animation: shrink 0.3s ease-in-out 1.5s forwards, fade-in 0.3s ease-in-out 1.5s forwards;
-}
-
-.highhead {
-  font-family: 'Montserrat', Helvetica, sans-serif;
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 20px;
-  letter-spacing: 1px;
-  opacity: 0;
-  animation: shrink 0.3s ease-in 1.5s forwards, fade-in 0.3s ease-in 1.5s forwards;
-  transition: color 0.2s linear;
-}
-
-.highscore {
-  font-family: 'Paytone One', Helvetica, sans-serif;
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 54px;
-  opacity: 0;
-  animation: shrink 0.3s ease-in-out 1.5s forwards, fade-in 0.3s ease-in-out 1.5s forwards;
-  transition: color 0.2s linear;
-}
-
-.footer {
-  font-family: 'Montserrat', Arial, Helvetica, sans-serif;
-  position: absolute;
-  bottom: 10px;
-  right: 50px;
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.6);
-  font-weight: bold;
-  letter-spacing: 1px;
+  animation: bouncy 1s linear;
 }
 </style>

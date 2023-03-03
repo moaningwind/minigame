@@ -15,7 +15,7 @@ const play = new GamePlay()
     </button>
   </div>
 
-  <div ma w81 h100 border="2 solid gray" overflow="hidden">
+  <div w81 h100 ma border="gray 2" overflow="hidden">
     <div relative :style="{ top: `${play.state.value.top}px` }">
       <div
         v-for="row, y in play.board" :key="y"
@@ -26,7 +26,7 @@ const play = new GamePlay()
           v-for="block, x in row"
           :key="x"
           w20 h25
-          border="1 solid gray"
+          border="gray 1"
           :class="block.isBlack ? 'bg-black' : 'bg-white'"
           @click="play.onClick(block)"
         >

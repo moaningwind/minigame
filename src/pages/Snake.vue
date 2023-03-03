@@ -38,7 +38,7 @@ function newGame(difficulty: 'easy' | 'medium' | 'hard') {
     </button>
   </div>
 
-  <table ma border-collapse bg="#74afe0">
+  <table ma border="collapse" bg="#74afe0">
     <tr
       v-for="row, y in play.board"
       :key="y"
@@ -46,8 +46,7 @@ function newGame(difficulty: 'easy' | 'medium' | 'hard') {
       <td
         v-for="block, x in row"
         :key="x"
-        w6
-        h6
+        w6 h6
         border
         :class="block.status"
       >
