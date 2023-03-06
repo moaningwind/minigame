@@ -93,7 +93,7 @@ function setHighScore() {
   score = 0
 }
 
-let interval: NodeJS.Timer | undefined
+let interval: number | undefined
 
 function handleCountdown() {
   if (countdown > 0) {
@@ -103,7 +103,7 @@ function handleCountdown() {
       message = 'Game Over'
       animation.bouncy = false
       setTimeout(() => {
-        clearInterval(interval)
+        window.window.clearInterval(interval)
         interval = undefined
         changeLevel(0)
         countdown = 7
@@ -115,15 +115,15 @@ function handleCountdown() {
 
 function handleOninput() {
   if (!interval)
-    interval = setInterval(handleCountdown, 1000)
+    interval = window.setInterval(handleCountdown, 1000)
 
   animation.wheel = false
 
   animation.bouncy = false
 
   if (inputValue === currentWord) {
-    clearInterval(interval)
-    interval = setInterval(handleCountdown, 1000)
+    window.clearInterval(interval)
+    interval = window.setInterval(handleCountdown, 1000)
 
     score += countdown
 
@@ -145,11 +145,11 @@ function handleOninput() {
 
 function handleToggle() {
   if (interval) {
-    clearInterval(interval)
+    window.clearInterval(interval)
     interval = undefined
   }
   else {
-    interval = setInterval(handleCountdown, 1000)
+    interval = window.setInterval(handleCountdown, 1000)
   }
 }
 
